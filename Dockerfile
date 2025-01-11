@@ -5,14 +5,15 @@ FROM node:18-alpine AS build
 WORKDIR /app
 
 # Install dependencies
-COPY package.json yarn.lock ./
-RUN yarn install
+COPY package.json ./
+# If you use npm instead of Yarn, skip copying `yarn.lock`
+RUN npm install
 
 # Copy the rest of the application code
 COPY . .
 
 # Build the Gatsby application
-RUN yarn build
+RUN npm run build
 
 # Stage 2: Serve the application with Nginx
 FROM nginx:stable-alpine
@@ -38,20 +39,7 @@ http { \
         location / { \
             root   /usr/share/nginx/html; \
             index  index.html; \
-            try_files $uri $uri/ /index.html; \
-        } \
-        location ~* \\.(?:manifest|appcache|html?|xml|json)$ { \
-            expires -1; \
-        } \
-        location ~* \\.(?:css|js)$ { \
-            expires 1y; \
-            access_log off; \
-            add_header Cache-Control "public"; \
-        } \
-        location ~* \\.(?:png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ { \
-            expires 1y; \
-            access_log off; \
-            add_header Cache-Control "public"; \
+            try_files $uri /index.html; \
         } \
     } \
 }' > /etc/nginx/nginx.conf
